@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-05-28T14:05:18",
+  "model_dir": "outputs_9am_rank_model_365_vol100m_test180",
+  "outdir": "docs",
+  "top_n": 3,
+  "short_threshold": 0.45,
+  "cost_pct": 0.5,
+  "min_quote_volume": null,
+  "latest_predictions": {
+    "path": "outputs_9am_rank_model_365_vol100m_test180\\latest_predictions.csv",
+    "exists": true,
+    "row_count": 32,
+    "latest_count": 32,
+    "snapshot_date": "2026-05-28",
+    "snapshot_time": "2026-05-28 09:00:00+09:00"
+  },
+  "model_metrics": {
+    "path": "outputs_9am_rank_model_365_vol100m_test180\\model_metrics.json",
+    "exists": true
+  },
+  "audit": {
+    "path": "outputs_9am_rank_model_365_vol100m_test180\\audit_sides_top3_cost0.5.json",
+    "exists": true
+  },
+  "daily_return_file": "outputs_9am_rank_model_365_vol100m_test180\\audit_short_top3_cost0.5_thr0.45.csv"
+}

@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Binance 9AM SHORT Dashboard</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(15, 23, 42, .92);
+      --panel2: rgba(30, 41, 59, .72);
+      --line: rgba(148, 163, 184, .18);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --green: #34d399;
+      --red: #fb7185;
+      --yellow: #fbbf24;
+      --blue: #60a5fa;
+      --purple: #a78bfa;
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(96,165,250,.22), transparent 28%),
+        radial-gradient(circle at 80% 10%, rgba(167,139,250,.18), transparent 26%),
+        linear-gradient(180deg, #07111f 0%, #0f172a 100%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    }
+    a { color: #93c5fd; text-decoration: none; }
+    .shell { max-width: 1440px; margin: 0 auto; padding: 24px; }
+    .hero { display: grid; grid-template-columns: 1.4fr .8fr; gap: 18px; align-items: stretch; }
+    .hero-card, .panel, .metric-card, .candidate-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: 22px;
+    }
+    .hero-card { padding: 26px; position: relative; overflow: hidden; }
+    .hero-card::after { content:""; position:absolute; inset:auto -80px -120px auto; width:260px; height:260px; border-radius:50%; background:rgba(52,211,153,.12); }
+    .eyebrow { color: var(--green); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; }
+    h1 { font-size: clamp(30px, 5vw, 54px); line-height: 1.03; margin: 12px 0 10px; letter-spacing: -0.05em; }
+    .subtitle { color: var(--muted); font-size: 16px; line-height: 1.6; max-width: 850px; }
+    .hero-side { padding: 22px; display:flex; flex-direction:column; justify-content:space-between; }
+    .snapshot { font-size: 24px; font-weight: 900; }
+    .small-muted { color: var(--muted); font-size: 13px; line-height:1.5; }
+    .pill-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    .pill { border:1px solid var(--line); border-radius:999px; padding:8px 11px; background:rgba(15,23,42,.55); color:var(--muted); font-size:13px; }
+    .pill strong { color:var(--text); }
+    .grid-metrics { display:grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin: 16px 0 18px; }
+    .metric-card { padding: 16px; min-height: 116px; }
+    .metric-card small { display:block; color:var(--muted); font-size:12px; }
+    .metric-card strong { display:block; margin-top:9px; font-size:25px; letter-spacing:-.03em; }
+    .metric-card span { display:block; margin-top:8px; color:var(--muted); font-size:12px; line-height:1.4; }
+    .metric-card.accent { border-color:rgba(52,211,153,.38); background:linear-gradient(180deg, rgba(52,211,153,.14), rgba(15,23,42,.92)); }
+    .metric-card.danger { border-color:rgba(251,113,133,.38); background:linear-gradient(180deg, rgba(251,113,133,.14), rgba(15,23,42,.92)); }
+    .metric-card.pos strong, .pos { color: var(--green); }
+    .metric-card.neg strong, .neg { color: var(--red); }
+    .muted { color: var(--muted); }
+    .section-title { display:flex; align-items:end; justify-content:space-between; gap:12px; margin:28px 0 12px; }
+    .section-title h2 { margin:0; font-size:24px; letter-spacing:-.03em; }
+    .section-title p { margin:0; color:var(--muted); font-size:13px; }
+    .candidate-list { display:grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .candidate-card { padding: 18px; }
+    .candidate-head { display:flex; justify-content:space-between; gap:12px; align-items:start; }
+    .candidate-card h3 { margin: 4px 0 0; font-size: 30px; letter-spacing:-.04em; }
+    .rank-badge { color:var(--green); font-size:12px; font-weight:900; }
+    .signal-pill { background:rgba(251,113,133,.14); color:#fecdd3; border:1px solid rgba(251,113,133,.28); padding:7px 10px; border-radius:999px; font-size:12px; font-weight:800; }
+    .prob-row { display:flex; justify-content:space-between; margin-top:20px; color:var(--muted); }
+    .prob-row strong { color:var(--text); font-size:22px; }
+    .prob-track { height:10px; border-radius:999px; background:rgba(148,163,184,.16); overflow:hidden; margin-top:8px; }
+    .prob-fill { height:100%; border-radius:999px; background:linear-gradient(90deg, var(--red), var(--yellow)); }
+    .candidate-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin-top:16px; }
+    .candidate-grid div { background:rgba(15,23,42,.75); border:1px solid var(--line); border-radius:14px; padding:10px; }
+    .candidate-grid small { display:block; color:var(--muted); font-size:11px; }
+    .candidate-grid b { display:block; margin-top:5px; font-size:14px; }
+    .candidate-foot { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:14px; color:var(--muted); font-size:12px; }
+    .panel { padding: 18px; margin-top: 14px; }
+    .two-col { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+    .table-scroll { overflow-x:auto; border-radius:16px; border:1px solid var(--line); }
+    table { width:100%; border-collapse:collapse; min-width: 680px; background:rgba(15,23,42,.45); }
+    th, td { padding:11px 12px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; font-size:13px; }
+    th { color:#cbd5e1; background:rgba(30,41,59,.85); font-size:12px; position:sticky; top:0; }
+    tr:hover td { background:rgba(96,165,250,.06); }
+    .rule-note, .empty-state, .warning { border:1px solid rgba(251,191,36,.32); background:rgba(251,191,36,.08); color:#fde68a; border-radius:16px; padding:13px 14px; margin-bottom:12px; line-height:1.55; }
+    .empty-state { color:var(--muted); border-color:var(--line); background:rgba(15,23,42,.55); }
+    .rule-list { margin:0; padding-left:20px; color:#cbd5e1; line-height:1.8; }
+    .equity-svg { width:100%; height:auto; display:block; }
+    .axis { stroke:rgba(148,163,184,.25); }
+    .eq-line { stroke:var(--green); stroke-width:3; filter: drop-shadow(0 0 10px rgba(52,211,153,.25)); }
+    .chart-label { fill:#d1fae5; font-size:18px; font-weight:900; }
+    .bar-wrap { height:130px; display:flex; align-items:flex-end; gap:3px; padding: 12px 4px 0; border-bottom:1px solid rgba(148,163,184,.2); }
+    .mini-bar { flex:1; min-width:3px; border-radius: 5px 5px 0 0; opacity:.85; }
+    .bar-pos { background:rgba(52,211,153,.72); }
+    .bar-neg { background:rgba(251,113,133,.72); }
+    .empty-chart { color:var(--muted); padding:40px 0; text-align:center; }
+    .file-status { list-style:none; padding:0; margin:0; display:grid; gap:10px; }
+    .file-status li { display:grid; grid-template-columns:160px 1fr; gap:10px; padding:10px; border-radius:12px; border:1px solid var(--line); background:rgba(15,23,42,.45); }
+    .file-status li b::before { content:"● "; }
+    .file-status li.ok b { color:var(--green); }
+    .file-status li.bad b { color:var(--red); }
+    .file-status span { color:var(--muted); font-size:12px; word-break:break-all; }
+    .code { background:#020617; border:1px solid var(--line); border-radius:14px; padding:12px; color:#bfdbfe; overflow:auto; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size:12px; }
+    .footer { margin:26px 0 8px; color:var(--muted); font-size:12px; text-align:center; }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+    .toolbar input { width: 260px; max-width:100%; background:#020617; color:var(--text); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+    .toolbar button { background:rgba(96,165,250,.16); color:#dbeafe; border:1px solid rgba(96,165,250,.28); border-radius:12px; padding:10px 12px; cursor:pointer; }
+    @media (max-width: 1180px) { .grid-metrics { grid-template-columns: repeat(3, 1fr); } .candidate-list { grid-template-columns: 1fr; } .hero { grid-template-columns:1fr; } }
+    @media (max-width: 720px) { .shell { padding:14px; } .grid-metrics { grid-template-columns: repeat(2, 1fr); } .two-col { grid-template-columns:1fr; } .candidate-grid { grid-template-columns: repeat(2,1fr); } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-card">
+        <div class="eyebrow">Binance 9AM SHORT-only model</div>
+        <h1>오전 9시 숏 후보 대시보드</h1>
+        <p class="subtitle">거래대금 큰 종목 중 <b>prob_up ≤ 0.45</b>인 약세 후보만 추립니다. 현재 검증 기준에서는 롱은 버리고, 숏 후보만 보는 구조입니다.</p>
+        <div class="pill-row">
+          <span class="pill">모델 폴더 <strong>outputs_9am_rank_model_365_vol100m_test180</strong></span>
+          <span class="pill">Top N <strong>3</strong></span>
+          <span class="pill">Cost <strong>0.50%</strong></span>
+          <span class="pill">생성 <strong>2026-05-28 14:05:18</strong></span>
+        </div>
+      </div>
+      <div class="hero-card hero-side">
+        <div>
+          <div class="small-muted">현재 스냅샷</div>
+          <div class="snapshot">2026-05-28 09:00:00+09:00</div>
+        </div>
+        <div class="small-muted">리서치/페이퍼트레이딩용입니다. 레버리지, 청산, 슬리피지, 펀딩비는 별도 검증이 필요합니다.</div>
+      </div>
+    </section>
+
+    <section class="grid-metrics">
+<div class="metric-card accent">
+  <small>오늘 숏 후보</small>
+  <strong>3개</strong>
+  <span>기준 prob_up ≤ 0.45, 최대 3개</span>
+</div>
+<div class="metric-card ">
+  <small>시장 상승 비율</small>
+  <strong>28.1%</strong>
+  <span>하락 비율 71.9%</span>
+</div>
+<div class="metric-card neg">
+  <small>시장 평균 수익률</small>
+  <strong>-3.68%</strong>
+  <span>BTC -1.96%</span>
+</div>
+<div class="metric-card pos">
+  <small>검증 평균</small>
+  <strong>+5.46%</strong>
+  <span>SHORT ≤ 0.45, top 3, cost 0.50%</span>
+</div>
+<div class="metric-card ">
+  <small>검증 승률</small>
+  <strong>73.7%</strong>
+  <span>days 167</span>
+</div>
+<div class="metric-card danger">
+  <small>최악일</small>
+  <strong>-19.40%</strong>
+  <span>레버리지 사용 시 가장 중요</span>
+</div></section>
+
+    <div class="warning"><b>운용 룰:</b> 이 화면은 매수 추천이 아니라 모델 리서치용입니다. 특히 숏은 24시간 종가가 유리해도 중간 급등으로 청산될 수 있으므로 레버리지는 별도 제한이 필요합니다.</div>
+
+    <section class="section-title">
+      <div><h2>오늘 숏 후보</h2><p>prob_up 낮은 순서. 조건 미충족 종목은 넣지 않습니다.</p></div>
+    </section>
+    <div class="candidate-list">
+<article class="candidate-card">
+  <div class="candidate-head">
+    <div>
+      <div class="rank-badge">SHORT #1</div>
+      <h3>LABUSDT</h3>
+    </div>
+    <span class="signal-pill">통과</span>
+  </div>
+  <div class="prob-row">
+    <span>하락 확률 추정</span>
+    <strong>62.0%</strong>
+  </div>
+  <div class="prob-track"><div class="prob-fill" style="width:62.0%"></div></div>
+  <div class="candidate-grid">
+    <div><small>prob_up</small><b>38.0%</b></div>
+    <div><small>24h 수익률</small><b class="pos">+0.25%</b></div>
+    <div><small>거래대금</small><b>199.5M USDT</b></div>
+    <div><small>당일 변동폭</small><b>37.43%</b></div>
+    <div><small>고가/시가</small><b class="pos">+7.85%</b></div>
+    <div><small>저가/시가</small><b class="neg">-21.53%</b></div>
+  </div>
+  <div class="candidate-foot">
+    <span>테이커 매수 비중 50.2%</span>
+    <a href="https://www.binance.com/en/futures/LABUSDT" target="_blank" rel="noreferrer">Binance 열기</a>
+  </div>
+</article>
+<article class="candidate-card">
+  <div class="candidate-head">
+    <div>
+      <div class="rank-badge">SHORT #2</div>
+      <h3>ICPUSDT</h3>
+    </div>
+    <span class="signal-pill">통과</span>
+  </div>
+  <div class="prob-row">
+    <span>하락 확률 추정</span>
+    <strong>58.3%</strong>
+  </div>
+  <div class="prob-track"><div class="prob-fill" style="width:58.3%"></div></div>
+  <div class="candidate-grid">
+    <div><small>prob_up</small><b>41.7%</b></div>
+    <div><small>24h 수익률</small><b class="pos">+7.01%</b></div>
+    <div><small>거래대금</small><b>143.6M USDT</b></div>
+    <div><small>당일 변동폭</small><b>16.69%</b></div>
+    <div><small>고가/시가</small><b class="pos">+16.51%</b></div>
+    <div><small>저가/시가</small><b class="neg">-0.15%</b></div>
+  </div>
+  <div class="candidate-foot">
+    <span>테이커 매수 비중 48.8%</span>
+    <a href="https://www.binance.com/en/futures/ICPUSDT" target="_blank" rel="noreferrer">Binance 열기</a>
+  </div>
+</article>
+<article class="candidate-card">
+  <div class="candidate-head">
+    <div>
+      <div class="rank-badge">SHORT #3</div>
+      <h3>UBUSDT</h3>
+    </div>
+    <span class="signal-pill">통과</span>
+  </div>
+  <div class="prob-row">
+    <span>하락 확률 추정</span>
+    <strong>57.6%</strong>
+  </div>
+  <div class="prob-track"><div class="prob-fill" style="width:57.6%"></div></div>
+  <div class="candidate-grid">
+    <div><small>prob_up</small><b>42.4%</b></div>
+    <div><small>24h 수익률</small><b class="pos">+2.23%</b></div>
+    <div><small>거래대금</small><b>110.3M USDT</b></div>
+    <div><small>당일 변동폭</small><b>12.21%</b></div>
+    <div><small>고가/시가</small><b class="pos">+9.52%</b></div>
+    <div><small>저가/시가</small><b class="neg">-2.40%</b></div>
+  </div>
+  <div class="candidate-foot">
+    <span>테이커 매수 비중 51.7%</span>
+    <a href="https://www.binance.com/en/futures/UBUSDT" target="_blank" rel="noreferrer">Binance 열기</a>
+  </div>
+</article></div>
+
+    <section class="two-col">
+      <div class="panel">
+        <div class="section-title" style="margin-top:0"><div><h2>관찰 후보</h2><p>기준에는 못 미치지만 가까운 종목</p></div></div>
+        <div class="table-scroll"><table id="nearTable"><thead><tr><th>종목</th><th>prob_up</th><th>24h</th><th>거래대금</th><th>신호</th></tr></thead><tbody><tr><td class="">GUAUSDT</td><td class="">45.6%</td><td class="neg">-72.59%</td><td class="">473.9M</td><td class="">SHORT/down</td></tr><tr><td class="">ADAUSDT</td><td class="">45.8%</td><td class="neg">-1.21%</td><td class="">166.4M</td><td class="">SHORT/down</td></tr><tr><td class="">NEARUSDT</td><td class="">46.6%</td><td class="neg">-2.51%</td><td class="">669.2M</td><td class="">SHORT/down</td></tr><tr><td class="">ESPORTSUSDT</td><td class="">46.7%</td><td class="neg">-5.43%</td><td class="">121.5M</td><td class="">SHORT/down</td></tr><tr><td class="">LINKUSDT</td><td class="">47.1%</td><td class="neg">-2.68%</td><td class="">122.6M</td><td class="">SHORT/down</td></tr><tr><td class="">SUIUSDT</td><td class="">47.1%</td><td class="neg">-4.08%</td><td class="">250.6M</td><td class="">SHORT/down</td></tr><tr><td class="">PLAYUSDT</td><td class="">47.2%</td><td class="neg">-15.63%</td><td class="">256.0M</td><td class="">SHORT/down</td></tr><tr><td class="">WLDUSDT</td><td class="">47.5%</td><td class="neg">-9.29%</td><td class="">503.6M</td><td class="">SHORT/down</td></tr><tr><td class="">DOGEUSDT</td><td class="">47.6%</td><td class="neg">-0.55%</td><td class="">395.6M</td><td class="">SHORT/down</td></tr><tr><td class="">TAOUSDT</td><td class="">47.7%</td><td class="neg">-4.14%</td><td class="">154.2M</td><td class="">SHORT/down</td></tr></tbody></table></div>
+      </div>
+      <div class="panel">
+        <div class="section-title" style="margin-top:0"><div><h2>롱 출력은 무시</h2><p>검증상 롱은 폐기한 상태</p></div></div>
+        <div class="table-scroll"><table id="longTable"><thead><tr><th>종목</th><th>prob_up</th><th>24h</th><th>거래대금</th><th>출력 신호</th></tr></thead><tbody><tr><td class="">BTCUSDT</td><td class="">55.3%</td><td class="neg">-1.96%</td><td class="">10.88B</td><td class="">LONG/up</td></tr></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title" style="margin-top:0"><div><h2>숏 전용 검증 결과</h2><p>SHORT ≤ 0.45, top 3, cost 0.50%</p></div></div>
+      <div class="grid-metrics">
+<div class="metric-card pos">
+  <small>평균 일수익</small>
+  <strong>+5.46%</strong>
+  <span>SHORT ≤ 0.45, top 3, cost 0.50%</span>
+</div>
+<div class="metric-card pos">
+  <small>중앙값</small>
+  <strong>+5.48%</strong>
+  <span>평균보다 안정성 확인</span>
+</div>
+<div class="metric-card ">
+  <small>승률</small>
+  <strong>73.7%</strong>
+  <span>일 단위 기준</span>
+</div>
+<div class="metric-card danger">
+  <small>최악일</small>
+  <strong>-19.40%</strong>
+  <span>청산 리스크 체크</span>
+</div>
+<div class="metric-card ">
+  <small>상위 5일 의존도</small>
+  <strong>0.1608</strong>
+  <span>낮을수록 특정 날 의존↓</span>
+</div>
+<div class="metric-card accent">
+  <small>누적 배수</small>
+  <strong>3783.41x</strong>
+  <span>비용 차감 후 gross</span>
+</div></div>
+      <div class="two-col">
+        <div>
+          <h3>누적 성과 곡선</h3>
+          
+<svg class="equity-svg" viewBox="0 0 680 170" role="img" aria-label="누적 성과 곡선">
+  <defs>
+    <linearGradient id="eqFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(52,211,153,0.42)"/>
+      <stop offset="100%" stop-color="rgba(52,211,153,0.02)"/>
+    </linearGradient>
+  </defs>
+  <line x1="14" y1="152" x2="666" y2="152" class="axis"/>
+  <polyline points="14.00,152.00 17.93,152.00 21.86,152.00 25.78,151.99 29.71,151.99 33.64,151.98 37.57,151.98 41.49,151.98 45.42,151.97 49.35,151.96 53.28,151.95 57.20,151.97 61.13,151.96 65.06,151.95 68.99,151.94 72.92,151.93 76.84,151.92 80.77,151.91 84.70,151.89 88.63,151.87 92.55,151.85 96.48,151.84 100.41,151.82 104.34,151.80 108.27,151.79 112.19,151.76 116.12,151.75 120.05,151.73 123.98,151.69 127.90,151.69 131.83,151.67 135.76,151.68 139.69,151.68 143.61,151.67 147.54,151.71 151.47,151.70 155.40,151.69 159.33,151.67 163.25,151.65 167.18,151.63 171.11,151.61 175.04,151.56 178.96,151.55 182.89,151.58 186.82,151.61 190.75,151.57 194.67,151.58 198.60,151.54 202.53,151.54 206.46,151.52 210.39,151.48 214.31,151.36 218.24,151.36 222.17,151.27 226.10,151.20 230.02,151.07 233.95,151.16 237.88,151.20 241.81,150.81 245.73,150.78 249.66,150.76 253.59,150.83 257.52,150.58 261.45,150.68 265.37,150.70 269.30,150.60 273.23,150.52 277.16,150.47 281.08,150.55 285.01,150.59 288.94,150.54 292.87,150.34 296.80,150.38 300.72,150.22 304.65,150.15 308.58,150.31 312.51,150.30 316.43,150.63 320.36,150.62 324.29,150.63 328.22,150.66 332.14,150.66 336.07,150.62 340.00,150.49 343.93,150.57 347.86,150.54 351.78,150.54 355.71,150.29 359.64,150.25 363.57,150.09 367.49,149.95 371.42,149.99 375.35,150.04 379.28,150.34 383.20,150.20 387.13,150.27 391.06,150.22 394.99,150.05 398.92,150.11 402.84,149.97 406.77,149.72 410.70,149.56 414.63,149.31 418.55,149.21 422.48,148.91 426.41,148.12 430.34,147.90 434.27,147.23 438.19,146.74 442.12,146.41 446.05,146.49 449.98,146.15 453.90,146.60 457.83,146.89 461.76,146.16 465.69,145.09 469.61,143.76 473.54,142.56 477.47,142.42 481.40,142.93 485.33,141.84 489.25,141.42 493.18,140.45 497.11,142.09 501.04,143.11 504.96,142.34 508.89,140.24 512.82,139.58 516.75,136.18 520.67,135.15 524.60,131.98 528.53,129.66 532.46,130.31 536.39,129.34 540.31,125.13 544.24,122.10 548.17,117.80 552.10,113.62 556.02,106.23 559.95,105.47 563.88,104.10 567.81,102.80 571.73,112.35 575.66,107.61 579.59,108.03 583.52,113.24 587.45,109.71 591.37,106.14 595.30,105.82 599.23,97.95 603.16,95.24 607.08,98.07 611.01,94.36 614.94,95.56 618.87,90.38 622.80,78.87 626.72,80.14 630.65,78.64 634.58,63.32 638.51,54.79 642.43,45.58 646.36,47.47 650.29,31.69 654.22,35.43 658.14,32.92 662.07,23.56 666.00,18.00" class="eq-line" fill="none"/>
+  <polygon points="14,152 14.00,152.00 17.93,152.00 21.86,152.00 25.78,151.99 29.71,151.99 33.64,151.98 37.57,151.98 41.49,151.98 45.42,151.97 49.35,151.96 53.28,151.95 57.20,151.97 61.13,151.96 65.06,151.95 68.99,151.94 72.92,151.93 76.84,151.92 80.77,151.91 84.70,151.89 88.63,151.87 92.55,151.85 96.48,151.84 100.41,151.82 104.34,151.80 108.27,151.79 112.19,151.76 116.12,151.75 120.05,151.73 123.98,151.69 127.90,151.69 131.83,151.67 135.76,151.68 139.69,151.68 143.61,151.67 147.54,151.71 151.47,151.70 155.40,151.69 159.33,151.67 163.25,151.65 167.18,151.63 171.11,151.61 175.04,151.56 178.96,151.55 182.89,151.58 186.82,151.61 190.75,151.57 194.67,151.58 198.60,151.54 202.53,151.54 206.46,151.52 210.39,151.48 214.31,151.36 218.24,151.36 222.17,151.27 226.10,151.20 230.02,151.07 233.95,151.16 237.88,151.20 241.81,150.81 245.73,150.78 249.66,150.76 253.59,150.83 257.52,150.58 261.45,150.68 265.37,150.70 269.30,150.60 273.23,150.52 277.16,150.47 281.08,150.55 285.01,150.59 288.94,150.54 292.87,150.34 296.80,150.38 300.72,150.22 304.65,150.15 308.58,150.31 312.51,150.30 316.43,150.63 320.36,150.62 324.29,150.63 328.22,150.66 332.14,150.66 336.07,150.62 340.00,150.49 343.93,150.57 347.86,150.54 351.78,150.54 355.71,150.29 359.64,150.25 363.57,150.09 367.49,149.95 371.42,149.99 375.35,150.04 379.28,150.34 383.20,150.20 387.13,150.27 391.06,150.22 394.99,150.05 398.92,150.11 402.84,149.97 406.77,149.72 410.70,149.56 414.63,149.31 418.55,149.21 422.48,148.91 426.41,148.12 430.34,147.90 434.27,147.23 438.19,146.74 442.12,146.41 446.05,146.49 449.98,146.15 453.90,146.60 457.83,146.89 461.76,146.16 465.69,145.09 469.61,143.76 473.54,142.56 477.47,142.42 481.40,142.93 485.33,141.84 489.25,141.42 493.18,140.45 497.11,142.09 501.04,143.11 504.96,142.34 508.89,140.24 512.82,139.58 516.75,136.18 520.67,135.15 524.60,131.98 528.53,129.66 532.46,130.31 536.39,129.34 540.31,125.13 544.24,122.10 548.17,117.80 552.10,113.62 556.02,106.23 559.95,105.47 563.88,104.10 567.81,102.80 571.73,112.35 575.66,107.61 579.59,108.03 583.52,113.24 587.45,109.71 591.37,106.14 595.30,105.82 599.23,97.95 603.16,95.24 607.08,98.07 611.01,94.36 614.94,95.56 618.87,90.38 622.80,78.87 626.72,80.14 630.65,78.64 634.58,63.32 638.51,54.79 642.43,45.58 646.36,47.47 650.29,31.69 654.22,35.43 658.14,32.92 662.07,23.56 666.00,18.00 666,152" fill="url(#eqFill)"/>
+  <text x="661" y="22" text-anchor="end" class="chart-label">3783.41x</text>
+</svg>
+        </div>
+        <div>
+          <h3>최근 일별 수익률</h3>
+          <div class="bar-wrap"><span class="mini-bar bar-pos" style="height:60.9%" title="16.62%"></span><span class="mini-bar bar-pos" style="height:8.8%" title="2.39%"></span><span class="mini-bar bar-pos" style="height:33.3%" title="9.09%"></span><span class="mini-bar bar-pos" style="height:25.0%" title="6.81%"></span><span class="mini-bar bar-neg" style="height:6.4%" title="-1.76%"></span><span class="mini-bar bar-neg" style="height:9.3%" title="-2.53%"></span><span class="mini-bar bar-neg" style="height:55.2%" title="-15.05%"></span><span class="mini-bar bar-pos" style="height:30.9%" title="8.42%"></span><span class="mini-bar bar-neg" style="height:13.0%" title="-3.54%"></span><span class="mini-bar bar-pos" style="height:9.7%" title="2.65%"></span><span class="mini-bar bar-pos" style="height:34.8%" title="9.50%"></span><span class="mini-bar bar-neg" style="height:12.7%" title="-3.48%"></span><span class="mini-bar bar-pos" style="height:27.6%" title="7.54%"></span><span class="mini-bar bar-pos" style="height:44.1%" title="12.04%"></span><span class="mini-bar bar-pos" style="height:25.5%" title="6.97%"></span><span class="mini-bar bar-pos" style="height:36.5%" title="9.97%"></span><span class="mini-bar bar-pos" style="height:13.4%" title="3.64%"></span><span class="mini-bar bar-pos" style="height:39.5%" title="10.77%"></span><span class="mini-bar bar-pos" style="height:93.1%" title="25.40%"></span><span class="mini-bar bar-pos" style="height:20.0%" title="5.45%"></span><span class="mini-bar bar-pos" style="height:59.6%" title="16.27%"></span><span class="mini-bar bar-pos" style="height:37.2%" title="10.15%"></span><span class="mini-bar bar-pos" style="height:22.9%" title="6.26%"></span><span class="mini-bar bar-neg" style="height:5.4%" title="-1.46%"></span><span class="mini-bar bar-pos" style="height:22.7%" title="6.20%"></span><span class="mini-bar bar-neg" style="height:28.1%" title="-7.68%"></span><span class="mini-bar bar-neg" style="height:19.3%" title="-5.27%"></span><span class="mini-bar bar-pos" style="height:51.9%" title="14.17%"></span><span class="mini-bar bar-pos" style="height:66.6%" title="18.18%"></span><span class="mini-bar bar-pos" style="height:70.0%" title="19.11%"></span><span class="mini-bar bar-pos" style="height:53.2%" title="14.51%"></span><span class="mini-bar bar-pos" style="height:5.5%" title="1.51%"></span><span class="mini-bar bar-neg" style="height:19.7%" title="-5.36%"></span><span class="mini-bar bar-pos" style="height:44.2%" title="12.05%"></span><span class="mini-bar bar-pos" style="height:15.1%" title="4.11%"></span><span class="mini-bar bar-pos" style="height:33.2%" title="9.06%"></span><span class="mini-bar bar-neg" style="height:51.6%" title="-14.09%"></span><span class="mini-bar bar-neg" style="height:37.8%" title="-10.31%"></span><span class="mini-bar bar-pos" style="height:31.7%" title="8.64%"></span><span class="mini-bar bar-pos" style="height:79.6%" title="21.72%"></span><span class="mini-bar bar-pos" style="height:20.4%" title="5.56%"></span><span class="mini-bar bar-pos" style="height:100.0%" title="27.29%"></span><span class="mini-bar bar-pos" style="height:23.8%" title="6.48%"></span><span class="mini-bar bar-pos" style="height:68.9%" title="18.79%"></span><span class="mini-bar bar-pos" style="height:42.4%" title="11.58%"></span><span class="mini-bar bar-neg" style="height:10.6%" title="-2.90%"></span><span class="mini-bar bar-pos" style="height:16.3%" title="4.45%"></span><span class="mini-bar bar-pos" style="height:67.9%" title="18.53%"></span><span class="mini-bar bar-pos" style="height:41.3%" title="11.27%"></span><span class="mini-bar bar-pos" style="height:52.6%" title="14.36%"></span><span class="mini-bar bar-pos" style="height:44.7%" title="12.21%"></span><span class="mini-bar bar-pos" style="height:70.5%" title="19.23%"></span><span class="mini-bar bar-pos" style="height:6.1%" title="1.66%"></span><span class="mini-bar bar-pos" style="height:10.8%" title="2.95%"></span><span class="mini-bar bar-pos" style="height:9.9%" title="2.71%"></span><span class="mini-bar bar-neg" style="height:71.1%" title="-19.40%"></span><span class="mini-bar bar-pos" style="height:43.8%" title="11.96%"></span><span class="mini-bar bar-neg" style="height:4.0%" title="-0.95%"></span><span class="mini-bar bar-neg" style="height:43.4%" title="-11.84%"></span><span class="mini-bar bar-pos" style="height:33.3%" title="9.10%"></span><span class="mini-bar bar-pos" style="height:30.9%" title="8.42%"></span><span class="mini-bar bar-pos" style="height:4.0%" title="0.70%"></span><span class="mini-bar bar-pos" style="height:62.4%" title="17.04%"></span><span class="mini-bar bar-pos" style="height:18.4%" title="5.02%"></span><span class="mini-bar bar-neg" style="height:18.3%" title="-4.99%"></span><span class="mini-bar bar-pos" style="height:25.2%" title="6.87%"></span><span class="mini-bar bar-neg" style="height:7.6%" title="-2.07%"></span><span class="mini-bar bar-pos" style="height:33.6%" title="9.18%"></span><span class="mini-bar bar-pos" style="height:68.4%" title="18.66%"></span><span class="mini-bar bar-neg" style="height:6.4%" title="-1.74%"></span><span class="mini-bar bar-pos" style="height:7.7%" title="2.10%"></span><span class="mini-bar bar-pos" style="height:76.5%" title="20.87%"></span><span class="mini-bar bar-pos" style="height:35.2%" title="9.62%"></span><span class="mini-bar bar-pos" style="height:34.7%" title="9.47%"></span><span class="mini-bar bar-neg" style="height:6.5%" title="-1.77%"></span><span class="mini-bar bar-pos" style="height:55.3%" title="15.09%"></span><span class="mini-bar bar-neg" style="height:11.4%" title="-3.11%"></span><span class="mini-bar bar-pos" style="height:7.9%" title="2.15%"></span><span class="mini-bar bar-pos" style="height:28.8%" title="7.85%"></span><span class="mini-bar bar-pos" style="height:15.9%" title="4.33%"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title" style="margin-top:0"><div><h2>모델 분류 성능</h2><p>수익률만 보지 말고 AUC와 Balanced Accuracy도 같이 봅니다.</p></div></div>
+      <div class="grid-metrics">
+<div class="metric-card ">
+  <small>Best model</small>
+  <strong>random_forest</strong>
+  <span>train 2025-05-29~2025-11-28 / test 2025-11-29~2026-05-27</span>
+</div>
+<div class="metric-card ">
+  <small>ROC AUC</small>
+  <strong>0.5518</strong>
+  <span>0.50 이상이면 랜덤보다 우위</span>
+</div>
+<div class="metric-card ">
+  <small>Balanced Acc</small>
+  <strong>0.5399</strong>
+  <span>상승/하락 균형 정확도</span>
+</div>
+<div class="metric-card ">
+  <small>Accuracy</small>
+  <strong>0.5325</strong>
+  <span>전체 정답률</span>
+</div>
+<div class="metric-card ">
+  <small>Precision</small>
+  <strong>0.4621</strong>
+  <span>상승 예측 정밀도</span>
+</div>
+<div class="metric-card ">
+  <small>Recall</small>
+  <strong>0.5895</strong>
+  <span>상승 포착률</span>
+</div></div>
+    </section>
+
+    <section class="two-col">
+      <div class="panel">
+        <div class="section-title" style="margin-top:0"><div><h2>룰 요약</h2><p>오늘 후보를 해석하는 기준</p></div></div>
+        
+<ol class="rule-list">
+  <li><b>방향:</b> SHORT only. 롱 신호는 현재 검증상 사용하지 않습니다.</li>
+  <li><b>후보:</b> prob_up ≤ 0.45 종목만, 낮은 순서로 최대 3개.</li>
+  <li><b>부족하면:</b> 3개를 억지로 채우지 않습니다.</li>
+  <li><b>시간:</b> KST 09:00 기준 진입 후보, 다음날 KST 09:00 기준 성과 검증.</li>
+  <li><b>거래대금:</b> — USDT 이상 필터 (모델 폴더 기준)</li>
+</ol>
+
+      </div>
+      <div class="panel">
+        <div class="section-title" style="margin-top:0"><div><h2>데이터 파일 상태</h2><p>누락이면 해당 영역이 비어 보입니다.</p></div></div>
+        <ul class="file-status"><li class="ok"><b>latest_predictions</b><span>outputs_9am_rank_model_365_vol100m_test180\latest_predictions.csv</span></li><li class="ok"><b>model_metrics</b><span>outputs_9am_rank_model_365_vol100m_test180\model_metrics.json</span></li><li class="ok"><b>audit_sides</b><span>outputs_9am_rank_model_365_vol100m_test180\audit_sides_top3_cost0.5.json</span></li></ul>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title" style="margin-top:0"><div><h2>매일 갱신 명령</h2><p>모델 파일이 갱신된 뒤 이 명령으로 웹페이지를 다시 만듭니다.</p></div></div>
+      <div class="code">python audit_9am_rank_sides.py --dirs outputs_9am_rank_model_365_vol100m_test180 --top-n 3 --cost-pct 0.50 --include-no-threshold<br>python build_9am_short_dashboard.py --model-dir outputs_9am_rank_model_365_vol100m_test180 --top-n 3 --short-threshold 0.45 --cost-pct 0.50 --outdir docs</div>
+    </section>
+
+    <div class="footer">Generated by build_9am_short_dashboard.py · 리서치/페이퍼트레이딩용입니다. 레버리지, 청산, 슬리피지, 펀딩비는 별도 검증이 필요합니다.</div>
+  </main>
+  <script>
+    function filterTable(inputId, tableId) {
+      const input = document.getElementById(inputId);
+      const table = document.getElementById(tableId);
+      if (!input || !table) return;
+      const q = input.value.toLowerCase();
+      for (const row of table.querySelectorAll('tbody tr')) {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+      }
+    }
+  </script>
+</body>
+</html>
