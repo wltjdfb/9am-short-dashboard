@@ -1,0 +1,96 @@
+name: Update 9AM Short Dashboard
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Runs every day at 09:10 Asia/Seoul time.
+    # If timezone support is unavailable in your GitHub account, replace this with:
+    # - cron: '10 0 * * *'   # 09:10 KST = 00:10 UTC
+    - cron: '10 9 * * *'
+      timezone: 'Asia/Seoul'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements_binance_9am_rank_model.txt ]; then
+            python -m pip install -r requirements_binance_9am_rank_model.txt
+          elif [ -f requirements_binance_9am_rank_scanner.txt ]; then
+            python -m pip install -r requirements_binance_9am_rank_scanner.txt
+            python -m pip install scikit-learn joblib
+          else
+            python -m pip install pandas numpy requests scikit-learn joblib openpyxl
+          fi
+
+      - name: Collect 9AM Binance ranking data
+        run: |
+          python binance_9am_rank_scanner.py \
+            --days 365 \
+            --top-n 10 \
+            --min-quote-volume 100000000 \
+            --outdir outputs_binance_9am_rank_365
+
+      - name: Train model and generate latest predictions
+        run: |
+          python train_binance_9am_rank_model.py \
+            --data-dir outputs_binance_9am_rank_365 \
+            --sample-mode all \
+            --min-quote-volume 100000000 \
+            --test-days 180 \
+            --outdir outputs_9am_rank_model_365_vol100m_test180
+
+      - name: Audit short-only strategy
+        run: |
+          python audit_9am_rank_sides.py \
+            --dirs outputs_9am_rank_model_365_vol100m_test180 \
+            --top-n 3 \
+            --cost-pct 0.50 \
+            --include-no-threshold
+
+      - name: Build static dashboard
+        run: |
+          python build_9am_short_dashboard.py \
+            --model-dir outputs_9am_rank_model_365_vol100m_test180 \
+            --top-n 3 \
+            --short-threshold 0.45 \
+            --cost-pct 0.50 \
+            --outdir site
+          touch site/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
