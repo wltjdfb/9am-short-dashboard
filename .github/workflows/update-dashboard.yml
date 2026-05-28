@@ -4,8 +4,6 @@ on:
   workflow_dispatch:
   schedule:
     # Runs every day at 09:10 Asia/Seoul time.
-    # If timezone support is unavailable in your GitHub account, replace this with:
-    # - cron: '10 0 * * *'   # 09:10 KST = 00:10 UTC
     - cron: '10 9 * * *'
       timezone: 'Asia/Seoul'
 
@@ -34,13 +32,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          python -m pip install pandas numpy requests scikit-learn joblib openpyxl
+          if [ -f requirements_binance_9am_rank_scanner.txt ]; then
+            python -m pip install -r requirements_binance_9am_rank_scanner.txt
+          fi
           if [ -f requirements_binance_9am_rank_model.txt ]; then
             python -m pip install -r requirements_binance_9am_rank_model.txt
-          elif [ -f requirements_binance_9am_rank_scanner.txt ]; then
-            python -m pip install -r requirements_binance_9am_rank_scanner.txt
-            python -m pip install scikit-learn joblib
-          else
-            python -m pip install pandas numpy requests scikit-learn joblib openpyxl
           fi
 
       - name: Collect 9AM Binance ranking data
